@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Grow SMM Panel</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif;}
+  body{background:#0a0a0a;color:#fff;overflow-x:hidden;}
+  header{background:rgba(0,0,0,0.8);display:flex;justify-content:space-between;align-items:center;padding:12px 18px;position:sticky;top:0;z-index:100;}
+  header h1{font-size:1.2rem;background:linear-gradient(90deg,#00ffcc,#ff00ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+  .balance{font-size:0.9rem;color:#00ffcc;}
+  .menu-toggle{font-size:1.5rem;cursor:pointer;}
+  nav{display:none;flex-direction:column;background:#111;position:absolute;top:60px;right:0;width:70%;border-radius:10px 0 0 10px;box-shadow:-2px 0 10px rgba(0,0,0,0.6);}
+  nav a{color:#fff;text-decoration:none;padding:15px;border-bottom:1px solid #222;}
+  nav a:hover{background:#333;}
+  .active-menu{display:flex;}
+  .card{background:rgba(255,255,255,0.05);margin:10px auto;padding:20px;border-radius:15px;max-width:350px;box-shadow:0 0 15px rgba(0,255,200,0.3);text-align:center;}
+  footer{text-align:center;font-size:0.8rem;padding:15px;color:#888;}
+  .auth-box{max-width:350px;margin:40px auto;background:rgba(255,255,255,0.05);padding:20px;border-radius:15px;text-align:center;}
+  .auth-box input{width:90%;padding:10px;margin:8px 0;border:none;border-radius:10px;}
+  .auth-box button{width:90%;padding:12px;background:linear-gradient(90deg,#00ffcc,#ff00ff);border:none;border-radius:30px;color:#000;font-weight:bold;cursor:pointer;margin-top:10px;}
+  #dashboard,#orderPage,#authSection,#serviceModal,#orderDetailModal,#paymentPage,#paymentHistoryPage{display:none;}
+  #dashboard.active,#orderPage.active,#authSection.active,#serviceModal.active,#orderDetailModal.active,#paymentPage.active,#paymentHistoryPage.active{display:block;}
+  .service-list{display:flex;flex-direction:column;gap:10px;}
+  .service-item{background:#111;padding:15px;border-radius:10px;cursor:pointer;}
+  .modal-bg{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);display:flex;justify-content:center;align-items:center;z-index:1000;}
+  .modal-content{background:#111;padding:20px;border-radius:15px;width:90%;max-width:350px;text-align:center;}
+  .modal-content input{width:90%;padding:10px;margin:8px 0;border:none;border-radius:10px;}
+  .modal-content button{width:90%;padding:12px;background:linear-gradient(90deg,#00ffcc,#ff00ff);border:none;border-radius:30px;color:#000;font-weight:bold;cursor:pointer;margin-top:10px;}
+  .order-item{background:#111;padding:10px;border-radius:10px;margin:10px 0;}
+  .status.pending{color:orange;}
+  .status.processing{color:#00aaff;}
+  .status.completed{color:lime;}
+  .status.canceled{color:red;}
+  #qrCode img{margin:auto;display:block;} /* fixed QR */
+</style>
+</head>
+<body>
+<header>
+  <h1>Grow SMM Panel</h1>
+  <span class="balance" id="userBalance">₹0.00</span>
+  <span class="menu-toggle">☰</span>
+  <nav id="menu">
+    <a href="#" onclick="showSection('dashboard')">Dashboard</a>
+    <a href="#" onclick="showSection('orderPage')">My Orders</a>
+    <a href="#" onclick="showSection('paymentPage')">Add Funds</a>
+    <a href="#" onclick="showSection('paymentHistoryPage')">Payment History</a>
+    <a href="#" onclick="logout()">Logout</a>
+  </nav>
+</header>
+
+<!-- AUTH SECTION -->
+<section id="authSection" class="active">
+  <div class="auth-box" id="loginBox">
+    <h2>Login</h2>
+    <input type="text" id="loginUser" placeholder="Username">
+    <input type="password" id="loginPass" placeholder="Password">
+    <button onclick="login()">Login</button>
+    <p style="margin-top:10px;">No account? <a href="#" onclick="toggleAuth('register')">Register</a></p>
+  </div>
+  <div class="auth-box" id="registerBox" style="display:none;">
+    <h2>Register</h2>
+    <input type="text" id="regUser" placeholder="Username">
+    <input type="password" id="regPass" placeholder="Password">
+    <button onclick="register()">Register</button>
+    <p style="margin-top:10px;">Have account? <a href="#" onclick="toggleAuth('login')">Login</a></p>
+  </div>
+</section>
+
+<!-- DASHBOARD -->
+<section id="dashboard">
+  <div class="card">
+    <h2>Welcome to Grow SMM Panel</h2>
+    <p>Select a service category to order.</p>
+  </div>
+  <div class="service-list" id="serviceList"></div>
+</section>
+
+<!-- ORDER PAGE -->
+<section id="orderPage">
+  <div class="card">
+    <h2>My Orders</h2>
+    <div id="orderList"></div>
+  </div>
+</section>
+
+<!-- PAYMENT PAGE -->
+<section id="paymentPage">
+  <div class="card">
+    <h2>Add Funds</h2>
+    <input type="number" id="addAmount" placeholder="Enter Amount ₹">
+    
+    <!-- Fixed QR Code -->
+    <div id="qrCode" style="margin:20px 0;">
+      <img src="/storage/emulated/0/DCIM/Screenshots/IMG_20251008_070733.jpg" alt="Scan QR to Pay" style="width:180px;height:180px;">
+    </div>
+
+    <input type="text" id="utrInput" placeholder="Enter 12-digit UTR" style="width:90%;padding:10px;margin:10px 0;border:none;border-radius:10px;">
+    <button onclick="confirmAddFunds()">Confirm Payment</button>
+    <p style="margin-top:10px;font-size:0.8rem;">*After payment, enter your UTR to credit balance.</p>
+  </div>
+</section>
+
+<!-- PAYMENT HISTORY -->
+<section id="paymentHistoryPage">
+  <div class="card">
+    <h2>Payment History</h2>
+    <div id="paymentList"></div>
+  </div>
+</section>
+
+<!-- SERVICE MODAL -->
+<div id="serviceModal" class="modal-bg">
+  <div class="modal-content">
+    <h3 id="serviceTitle"></h3>
+    <input type="text" id="linkInput" placeholder="Enter Post/Video Link">
+    <input type="number" id="quantityInput" placeholder="Enter Quantity" oninput="calculatePrice()">
+    <p id="priceDisplay" style="margin-bottom:10px; font-weight:bold; color:#00ffcc;">Price: ₹0</p>
+    <button onclick="placeOrder()">Place Order</button>
+    <button onclick="closeServiceModal()">Close</button>
+  </div>
+</div>
+
+<!-- ORDER DETAIL MODAL -->
+<div id="orderDetailModal" class="modal-bg">
+  <div class="modal-content" id="orderDetailBox"></div>
+</div>
+
+<footer>© 2025 Grow SMM Panel</footer>
+
+<script>
+const menuToggle=document.querySelector('.menu-toggle');
+const menu=document.querySelector('#menu');
+const serviceModal=document.querySelector('#serviceModal');
+const orderDetailModal=document.querySelector('#orderDetailModal');
+const balanceEl=document.getElementById('userBalance');
+let currentService=null;
+let pricePer1000 = 10;
+
+const services=[
+  {name:'Instagram Followers',price:10},
+  {name:'Instagram Likes',price:8},
+  {name:'INSTAGRAM Views',price:0.5},
+  {name:'TikTok Followers',price:12},
+  {name:'Facebook Likes',price:7},
+  {name:'Twitter Views',price:6},
+  {name:'Telegram Members',price:9}
+];
+
+menuToggle.addEventListener('click',()=>menu.classList.toggle('active-menu'));
+
+function toggleAuth(type){
+  document.getElementById('loginBox').style.display= type==='login'?'block':'none';
+  document.getElementById('registerBox').style.display= type==='register'?'block':'none';
+}
+
+function register(){
+  const u=document.getElementById('regUser').value;
+  const p=document.getElementById('regPass').value;
+  if(!u||!p) return alert('Fill all fields');
+  localStorage.setItem('growUser',JSON.stringify({u,p,balance:0}));
+  alert('Registered! Now login.');
+  toggleAuth('login');
+}
+
+function login(){
+  const u=document.getElementById('loginUser').value;
+  const p=document.getElementById('loginPass').value;
+  const user=JSON.parse(localStorage.getItem('growUser')||'{}');
+  if(u===user.u && p===user.p){
+    localStorage.setItem('growLogged','1');
+    showSection('dashboard');
+    updateBalance();
+  } else alert('Invalid credentials');
+}
+
+function logout(){
+  localStorage.removeItem('growLogged');
+  showSection('authSection');
+}
+
+function showSection(id){
+  ['authSection','dashboard','orderPage','paymentPage','paymentHistoryPage'].forEach(s=>document.getElementById(s).classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  menu.classList.remove('active-menu');
+  if(id==='dashboard') renderServices();
+  if(id==='orderPage') renderOrders();
+  if(id==='paymentHistoryPage') renderPayments();
+  updateBalance();
+}
+
+if(localStorage.getItem('growLogged')) showSection('dashboard');
+
+function renderServices(){
+  const list=document.getElementById('serviceList');
+  list.innerHTML='';
+  services.forEach(s=>{
+    const div=document.createElement('div');
+    div.className='service-item';
+    div.innerText=`${s.name} — ₹${s.price}/1000`;
+    div.onclick=()=>openServiceModal(s);
+    list.appendChild(div);
+  });
+}
+
+function openServiceModal(service){
+  currentService=service;
+  pricePer1000=service.price;
+  document.getElementById('serviceTitle').innerText=service.name;
+  document.getElementById('linkInput').value='';
+  document.getElementById('quantityInput').value='';
+  document.getElementById('priceDisplay').innerText='Price: ₹0';
+  serviceModal.classList.add('active');
+}
+function closeServiceModal(){ serviceModal.classList.remove('active'); }
+
+function calculatePrice(){
+  const qty=Number(document.getElementById('quantityInput').value);
+  const price=(qty/1000)*pricePer1000;
+  document.getElementById('priceDisplay').innerText=`Price: ₹${price.toFixed(2)}`;
+}
+
+function placeOrder(){
+  const link=document.getElementById('linkInput').value;
+  const qty=document.getElementById('quantityInput').value;
+  if(!link||!qty)return alert('Fill all fields');
+  const price=(qty/1000)*pricePer1000;
+
+  const user=JSON.parse(localStorage.getItem('growUser')||'{}');
+  if(price>user.balance){ alert('Insufficient balance. Please add funds.'); return; }
+
+  user.balance -= price;
+  localStorage.setItem('growUser',JSON.stringify(user));
+  updateBalance();
+
+  const orders=JSON.parse(localStorage.getItem('growwOrders')||'[]');
+  const id=Date.now();
+  const order={id,service:currentService.name,link,quantity:qty,price:price.toFixed(2),status:'pending',date:new Date().toLocaleString()};
+  orders.push(order);
+  localStorage.setItem('growwOrders',JSON.stringify(orders));
+  closeServiceModal();
+  alert(`Order placed successfully! ₹${price.toFixed(2)}`);
+  simulateStatusChange(id);
+}
+
+function renderOrders(){
+  const orders=JSON.parse(localStorage.getItem('growwOrders')||'[]');
+  const list=document.getElementById('orderList');
+  list.innerHTML='';
+  orders.forEach(o=>{
+    const div=document.createElement('div');
+    div.className='order-item';
+    div.innerHTML=`<strong>${o.service}</strong><br>Qty: ${o.quantity} | ₹${o.price}<br>Status: <span class="status ${o.status}">${o.status.toUpperCase()}</span>`;
+    div.onclick=()=>showOrderDetail(o.id);
+    list.appendChild(div);
+  });
+}
+
+function showOrderDetail(id){
+  const orders=JSON.parse(localStorage.getItem('growwOrders')||'[]');
+  const o=orders.find(x=>x.id===id);
+  document.getElementById('orderDetailBox').innerHTML=`
+    <h3>Order Detail</h3>
+    <p><strong>Service:</strong> ${o.service}</p>
+    <p><strong>Link:</strong> ${o.link}</p>
+    <p><strong>Quantity:</strong> ${o.quantity}</p>
+    <p><strong>Price:</strong> ₹${o.price}</p>
+    <p><strong>Date:</strong> ${o.date}</p>
+    <p><strong>Status:</strong> <span class="status ${o.status}">${o.status.toUpperCase()}</span></p>
+    <button onclick="closeOrderDetail()">Close</button>
+  `;
+  orderDetailModal.classList.add('active');
+}
+function closeOrderDetail(){ orderDetailModal.classList.remove('active'); }
+
+function simulateStatusChange(id){
+  setTimeout(()=>updateOrderStatus(id,'processing'),3000);
+  setTimeout(()=>updateOrderStatus(id,'completed'),10000);
+}
+
+function updateOrderStatus(id,status){
+  const orders=JSON.parse(localStorage.getItem('growwOrders')||'[]');
+  const idx=orders.findIndex(x=>x.id===id);
+  if(idx>-1){
+    orders[idx].status=status;
+    localStorage.setItem('growwOrders',JSON.stringify(orders));
+    renderOrders();
+  }
+}
+
+// Fixed QR payment confirmation
+function confirmAddFunds(){
+  const amount = Number(document.getElementById('addAmount').value);
+  const utr = document.getElementById('utrInput').value.trim();
+  if(amount <= 0) return alert('Enter a valid amount');
+  if(!/^\d{12}$/.test(utr)) return alert('Enter a valid 12-digit UTR');
+
+  const user = JSON.parse(localStorage.getItem('growUser')||'{}');
+  user.balance = (user.balance||0) + amount;
+  localStorage.setItem('growUser', JSON.stringify(user));
+
+  const payments = JSON.parse(localStorage.getItem('growPayments')||'[]');
+  payments.push({id:Date.now(), amount, utr, date: new Date().toLocaleString()});
+  localStorage.setItem('growPayments', JSON.stringify(payments));
+
+  alert(`Funds added successfully! ₹${amount}`);
+  document.getElementById('addAmount').value='';
+  document.getElementById('utrInput').value='';
+  updateBalance();
+}
+
+function renderPayments(){
+  const payments=JSON.parse(localStorage.getItem('growPayments')||'[]');
+  const list=document.getElementById('paymentList');
+  list.innerHTML='';
+  if(payments.length===0){ list.innerHTML='<p>No payment history.</p>'; return; }
+  payments.forEach(p=>{
+    const div=document.createElement('div');
+    div.className='order-item';
+    div.innerHTML=`<strong>₹${p.amount}</strong> — UTR: ${p.utr}<br><small>${p.date}</small>`;
+    list.appendChild(div);
+  });
+}
+
+function updateBalance(){
+  const user=JSON.parse(localStorage.getItem('growUser')||'{}');
+  balanceEl.textContent='₹'+(user.balance||0).toFixed(2);
+}
+</script>
+</body>
+</html>
